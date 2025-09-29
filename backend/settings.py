@@ -1,6 +1,7 @@
 """Application configuration settings."""
 
 import socket
+import subprocess
 from functools import lru_cache
 from typing import Optional
 
@@ -10,8 +11,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Runtime configuration loaded from environment variables."""
 
-    server_ip: str = "0.0.0.0"
-    iface: str = "eth0"
+    server_ip: str = "auto"
+    iface: str = "any"
     window_seconds: int = 5
     retention_seconds: int = 300
 
@@ -19,16 +20,11 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Se server_ip for 0.0.0.0, detectar automaticamente
-        if self.server_ip == "0.0.0.0":
-            try:
-                # Conectar a um endereço externo para descobrir o IP local
-                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                    s.connect(("8.8.8.8", 80))
-                    self.server_ip = s.getsockname()[0]
-            except Exception:
-                # Fallback para localhost se não conseguir detectar
-                self.server_ip = "127.0.0.1"
+        # Se server_ip for "auto", usar 0.0.0.0 para capturar todo tráfego
+        if self.server_ip == "auto":
+            self.server_ip = "0.0.0.0"
+        # Log para debug
+        print(f"DEBUG: Final SERVER_IP = {self.server_ip}")
 
 
 @lru_cache

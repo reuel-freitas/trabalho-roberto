@@ -47,13 +47,19 @@ class CaptureService:
             self._thread.join(timeout=1)
 
     def _run(self) -> None:
+        LOGGER.info("=== CAPTURE THREAD STARTING ===")
         LOGGER.info("Starting LiveCapture on interface %s", self.iface)
         while not self._stop_event.is_set():
             try:
-                capture = pyshark.LiveCapture(interface=self.iface, bpf_filter="ip")
+                LOGGER.info("Creating LiveCapture instance...")
+                capture = pyshark.LiveCapture(interface=self.iface)
+                LOGGER.info("Starting packet capture...")
+                packet_count = 0
                 for packet in capture.sniff_continuously():
                     if self._stop_event.is_set():
                         break
+                    packet_count += 1
+                    LOGGER.info("Processing packet #%d", packet_count)
                     self._process_packet(packet)
             except Exception as exc:  # noqa: BLE001
                 LOGGER.exception("Capture loop error: %s", exc)
@@ -65,11 +71,13 @@ class CaptureService:
             length = int(packet.length)
             src_ip = packet.ip.src
             dst_ip = packet.ip.dst
+            LOGGER.info("Packet: %s -> %s, length=%d", src_ip, dst_ip, length)
         except Exception as exc:  # noqa: BLE001
             LOGGER.debug("Skipping packet due to parse error: %s", exc)
             return
 
         protocol = self._detect_protocol(packet)
+        LOGGER.info("Detected protocol: %s", protocol)
 
         try:
             self.aggregator.add_packet(
@@ -79,6 +87,7 @@ class CaptureService:
                 length=length,
                 protocol=protocol,
             )
+            LOGGER.info("Packet added to aggregator successfully")
         except Exception as exc:  # noqa: BLE001
             LOGGER.exception("Failed to add packet to aggregator: %s", exc)
 

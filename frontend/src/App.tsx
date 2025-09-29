@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Header from "./components/Header";
 import TrafficChart from "./components/TrafficChart";
 import DrilldownPanel from "./components/DrilldownPanel";
+import ClientChart from "./components/ClientChart";
 import { useTrafficStore } from "./store";
 
 const POLL_INTERVAL_MS = 2000;
@@ -27,6 +28,9 @@ function App() {
         <div className="drilldown-container">
           <DrilldownPanel selection={selectedBin} />
         </div>
+      </div>
+      <div style={{ padding: "1rem", backgroundColor: "#F8FAFC" }}>
+        <ClientChart />
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ services:
       context: ./backend
     env_file:
       - .env
+    environment:
+      - SERVER_IP=10.50.0.10
     ports:
       - "0.0.0.0:8000:8000"
     cap_add:
@@ -11,7 +13,8 @@ services:
       - NET_RAW
     restart: unless-stopped
     networks:
-      - app-network
+      app-network:
+        ipv4_address: 10.50.0.10
 
   frontend:
     build:
@@ -26,10 +29,127 @@ services:
       - backend
     restart: unless-stopped
     networks:
-      - app-network
+      app-network:
+        ipv4_address: 10.50.0.20
+
+  # Servidor HTTP simples
+  http-server:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./test-data:/usr/share/nginx/html
+    networks:
+      app-network:
+        ipv4_address: 10.50.0.30
+
+  # Servidor FTP
+  ftp-server:
+    image: stilliard/pure-ftpd
+    ports:
+      - "21:21"
+      - "30000-30009:30000-30009"
+    environment:
+      - PUBLICHOST=localhost
+      - FTP_USER_NAME=testuser
+      - FTP_USER_PASS=testpass
+      - FTP_USER_HOME=/home/testuser
+    volumes:
+      - ./test-data:/home/testuser
+    networks:
+      app-network:
+        ipv4_address: 10.50.0.40
+
+  # Cliente 1 - Faz requisições ao backend
+  client1:
+    image: curlimages/curl:latest
+    command: >
+      sh -c "
+        while true; do
+          curl -s http://backend:8000/api/health > /dev/null;
+          sleep 5;
+        done
+      "
+    depends_on:
+      - backend
+    networks:
+      app-network:
+        ipv4_address: 10.50.0.101
+
+  # Cliente 2 - Faz requisições ao backend
+  client2:
+    image: curlimages/curl:latest
+    command: >
+      sh -c "
+        while true; do
+          curl -s http://backend:8000/api/summary > /dev/null;
+          sleep 5;
+        done
+      "
+    depends_on:
+      - backend
+    networks:
+      app-network:
+        ipv4_address: 10.50.0.102
+
+  # Cliente 3 - Faz requisições ao backend e HTTP server
+  client3:
+    image: curlimages/curl:latest
+    command: >
+      sh -c "
+        while true; do
+          curl -s http://backend:8000/api/health > /dev/null;
+          curl -s http://http-server/ > /dev/null;
+          sleep 5;
+        done
+      "
+    depends_on:
+      - backend
+      - http-server
+    networks:
+      app-network:
+        ipv4_address: 10.50.0.103
+
+  # Cliente 4 - Faz requisições ao backend e HTTP server
+  client4:
+    image: curlimages/curl:latest
+    command: >
+      sh -c "
+        while true; do
+          curl -s http://backend:8000/api/summary > /dev/null;
+          curl -s http://http-server/ > /dev/null;
+          sleep 5;
+        done
+      "
+    depends_on:
+      - backend
+      - http-server
+    networks:
+      app-network:
+        ipv4_address: 10.50.0.104
+
+  # Cliente 5 - Faz requisições ao backend
+  client5:
+    image: curlimages/curl:latest
+    command: >
+      sh -c "
+        while true; do
+          curl -s http://backend:8000/api/health > /dev/null;
+          sleep 5;
+        done
+      "
+    depends_on:
+      - backend
+    networks:
+      app-network:
+        ipv4_address: 10.50.0.105
 
 networks:
   app-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.50.0.0/16
+          gateway: 10.50.0.1
 
 

@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from collections import defaultdict
 from typing import DefaultDict, Dict, Iterable, List, Optional
+
+LOGGER = logging.getLogger(__name__)
 
 
 ProtocolTotals = Dict[str, Dict[str, int]]
@@ -53,13 +56,18 @@ class TrafficAggregator:
         direction: Optional[str]
         client_ip: Optional[str]
 
+        LOGGER.info("Aggregator: src_ip=%s, dst_ip=%s, server_ip=%s", src_ip, dst_ip, self.server_ip)
+
         if dst_ip == self.server_ip:
             direction = "in"
             client_ip = src_ip
+            LOGGER.info("Aggregator: Direction IN, client_ip=%s", client_ip)
         elif src_ip == self.server_ip:
             direction = "out"
             client_ip = dst_ip
+            LOGGER.info("Aggregator: Direction OUT, client_ip=%s", client_ip)
         else:
+            LOGGER.info("Aggregator: SKIPPING packet - no match with server_ip")
             return
 
         ts_bin = self._bin_ts(timestamp)

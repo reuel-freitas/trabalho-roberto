@@ -6,7 +6,7 @@ from backend.aggregator import TrafficAggregator
 
 
 def make_aggregator(window: int = 5, retention: int = 300) -> TrafficAggregator:
-    return TrafficAggregator(server_ip="10.0.0.1", window_seconds=window, retention_seconds=retention)
+    return TrafficAggregator(server_ip="10.50.0.10", window_seconds=window, retention_seconds=retention)
 
 
 def test_packets_are_binned_by_window_seconds() -> None:
@@ -16,14 +16,14 @@ def test_packets_are_binned_by_window_seconds() -> None:
     aggregator.add_packet(
         timestamp=base_ts,
         src_ip="192.168.0.10",
-        dst_ip="10.0.0.1",
+        dst_ip="10.50.0.10",
         length=100,
         protocol="HTTP",
     )
     aggregator.add_packet(
         timestamp=base_ts + 8,
         src_ip="192.168.0.10",
-        dst_ip="10.0.0.1",
+        dst_ip="10.50.0.10",
         length=50,
         protocol="HTTP",
     )
@@ -40,13 +40,13 @@ def test_in_out_totals_per_client() -> None:
     aggregator.add_packet(
         timestamp=ts,
         src_ip="192.168.0.20",
-        dst_ip="10.0.0.1",
+        dst_ip="10.50.0.10",
         length=200,
         protocol="HTTP",
     )
     aggregator.add_packet(
         timestamp=ts,
-        src_ip="10.0.0.1",
+        src_ip="10.50.0.10",
         dst_ip="192.168.0.20",
         length=120,
         protocol="HTTP",
@@ -64,13 +64,13 @@ def test_drilldown_contains_protocol_totals() -> None:
     aggregator.add_packet(
         timestamp=ts,
         src_ip="192.168.0.30",
-        dst_ip="10.0.0.1",
+        dst_ip="10.50.0.10",
         length=300,
         protocol="HTTP",
     )
     aggregator.add_packet(
         timestamp=ts,
-        src_ip="10.0.0.1",
+        src_ip="10.50.0.10",
         dst_ip="192.168.0.30",
         length=50,
         protocol="UDP",
@@ -90,7 +90,7 @@ def test_garbage_collection_removes_old_bins() -> None:
     aggregator.add_packet(
         timestamp=base_ts,
         src_ip="192.168.0.40",
-        dst_ip="10.0.0.1",
+        dst_ip="10.50.0.10",
         length=100,
         protocol="HTTP",
     )
@@ -100,7 +100,7 @@ def test_garbage_collection_removes_old_bins() -> None:
     aggregator.add_packet(
         timestamp=now_ts,
         src_ip="192.168.0.41",
-        dst_ip="10.0.0.1",
+        dst_ip="10.50.0.10",
         length=100,
         protocol="HTTP",
     )
