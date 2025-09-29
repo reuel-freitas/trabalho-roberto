@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+    env_file:
+      - .env
+    environment:
+      - VITE_API_BASE=http://backend:8000/api
+    ports:
+      - "5173:4173"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+
