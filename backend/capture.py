@@ -92,9 +92,81 @@ class CaptureService:
             LOGGER.exception("Failed to add packet to aggregator: %s", exc)
 
     def _detect_protocol(self, packet: pyshark.packet.packet.Packet) -> str:
-        for layer_name, protocol in KNOWN_PROTOCOLS.items():
-            if getattr(packet, layer_name, None) is not None:
-                return protocol
+        # PRIMEIRO: Detectar por conteúdo/layers (mais preciso para protocolos de aplicação)
+        if hasattr(packet, 'http'):
+            LOGGER.info("🌐 HTTP DETECTED BY LAYER!")
+            return "HTTP"
+        if hasattr(packet, 'ftp'):
+            LOGGER.info("🐟 FTP DETECTED BY LAYER!")
+            return "FTP"
+        if hasattr(packet, 'ftp-data'):
+            LOGGER.info("🐟 FTP-DATA DETECTED BY LAYER!")
+            return "FTP"
+        if hasattr(packet, 'dns'):
+            LOGGER.info("🔍 DNS DETECTED BY LAYER!")
+            return "DNS"
+        if hasattr(packet, 'tls'):
+            LOGGER.info("🔒 TLS DETECTED BY LAYER!")
+            return "HTTPS/TLS"
+        if hasattr(packet, 'ssl'):
+            LOGGER.info("🔒 SSL DETECTED BY LAYER!")
+            return "HTTPS/TLS"
+            
+        # SEGUNDO: Detectar por porta (fallback para protocolos não detectados por layer)
+        try:
+            if hasattr(packet, 'tcp'):
+                src_port = int(packet.tcp.srcport)
+                dst_port = int(packet.tcp.dstport)
+                
+                LOGGER.info("🔍 TCP packet: src_port=%s, dst_port=%s", src_port, dst_port)
+                
+                # FTP - porta 21 (controle) e 20 (dados) e portas passivas (30000-30009)
+                if (src_port == 21 or dst_port == 21 or 
+                    src_port == 20 or dst_port == 20 or
+                    (30000 <= src_port <= 30009) or (30000 <= dst_port <= 30009)):
+                    LOGGER.info("🐟 FTP DETECTED BY PORT! src_port=%s, dst_port=%s", src_port, dst_port)
+                    return "FTP"
+                
+                # HTTP - porta 80 (fallback se não detectou por layer)
+                if src_port == 80 or dst_port == 80:
+                    LOGGER.info("🌐 HTTP DETECTED BY PORT! src_port=%s, dst_port=%s", src_port, dst_port)
+                    return "HTTP"
+                
+                # HTTPS - porta 443  
+                if src_port == 443 or dst_port == 443:
+                    LOGGER.info("🔒 HTTPS DETECTED BY PORT! src_port=%s, dst_port=%s", src_port, dst_port)
+                    return "HTTPS/TLS"
+                    
+                # DNS - porta 53
+                if src_port == 53 or dst_port == 53:
+                    LOGGER.info("🔍 DNS DETECTED BY PORT! src_port=%s, dst_port=%s", src_port, dst_port)
+                    return "DNS"
+                    
+                # Se é TCP mas não identificamos protocolo específico
+                LOGGER.info("📦 TCP GENERIC: src_port=%s, dst_port=%s", src_port, dst_port)
+                return "TCP"
+                
+            elif hasattr(packet, 'udp'):
+                src_port = int(packet.udp.srcport)
+                dst_port = int(packet.udp.dstport) 
+                
+                LOGGER.info("📦 UDP packet: src_port=%s, dst_port=%s", src_port, dst_port)
+                
+                # DNS - porta 53
+                if src_port == 53 or dst_port == 53:
+                    LOGGER.info("🔍 DNS DETECTED BY UDP PORT! src_port=%s, dst_port=%s", src_port, dst_port)
+                    return "DNS"
+                    
+                return "UDP"
+                
+            elif hasattr(packet, 'icmp'):
+                LOGGER.info("📡 ICMP packet detected")
+                return "ICMP"
+                
+        except Exception as exc:
+            LOGGER.debug("Error detecting protocol by port: %s", exc)
+            
+        LOGGER.info("❓ UNKNOWN PROTOCOL")
         return "OTHER"
 
 

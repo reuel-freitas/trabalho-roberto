@@ -58,11 +58,12 @@ class TrafficAggregator:
 
         LOGGER.info("Aggregator: src_ip=%s, dst_ip=%s, server_ip=%s", src_ip, dst_ip, self.server_ip)
 
-        if dst_ip == self.server_ip:
+        # Capturar tráfego para o servidor principal (backend)
+        if dst_ip == self.server_ip:  # Backend
             direction = "in"
             client_ip = src_ip
             LOGGER.info("Aggregator: Direction IN, client_ip=%s", client_ip)
-        elif src_ip == self.server_ip:
+        elif src_ip == self.server_ip:  # Backend
             direction = "out"
             client_ip = dst_ip
             LOGGER.info("Aggregator: Direction OUT, client_ip=%s", client_ip)

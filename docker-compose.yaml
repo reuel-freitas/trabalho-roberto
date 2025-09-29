@@ -8,6 +8,8 @@ services:
       - SERVER_IP=10.50.0.10
     ports:
       - "0.0.0.0:8000:8000"
+      - "0.0.0.0:21:21"
+      - "0.0.0.0:30000-30009:30000-30009"
     cap_add:
       - NET_ADMIN
       - NET_RAW
@@ -32,33 +34,8 @@ services:
       app-network:
         ipv4_address: 10.50.0.20
 
-  # Servidor HTTP simples
-  http-server:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./test-data:/usr/share/nginx/html
-    networks:
-      app-network:
-        ipv4_address: 10.50.0.30
-
-  # Servidor FTP
-  ftp-server:
-    image: stilliard/pure-ftpd
-    ports:
-      - "21:21"
-      - "30000-30009:30000-30009"
-    environment:
-      - PUBLICHOST=localhost
-      - FTP_USER_NAME=testuser
-      - FTP_USER_PASS=testpass
-      - FTP_USER_HOME=/home/testuser
-    volumes:
-      - ./test-data:/home/testuser
-    networks:
-      app-network:
-        ipv4_address: 10.50.0.40
+  # Servidor HTTP simples - REMOVIDO (backend serve HTTP)
+  # Servidor FTP - REMOVIDO (backend serve FTP)
 
   # Cliente 1 - Faz requisições ao backend
   client1:
@@ -92,38 +69,42 @@ services:
       app-network:
         ipv4_address: 10.50.0.102
 
-  # Cliente 3 - Faz requisições ao backend e HTTP server
+  # Cliente 3 - Faz requisições HTTP e FTP para o backend
   client3:
     image: curlimages/curl:latest
     command: >
       sh -c "
         while true; do
+          echo 'Client3: Making HTTP requests...';
           curl -s http://backend:8000/api/health > /dev/null;
-          curl -s http://http-server/ > /dev/null;
+          curl -s http://backend:8000/api/summary > /dev/null;
+          echo 'Client3: Making FTP requests...';
+          curl -s --ftp-pasv ftp://testuser:testpass@backend:21/ > /dev/null;
+          curl -s --ftp-pasv -T /dev/null ftp://testuser:testpass@backend:21/test.txt > /dev/null;
           sleep 5;
         done
       "
     depends_on:
       - backend
-      - http-server
     networks:
       app-network:
         ipv4_address: 10.50.0.103
 
-  # Cliente 4 - Faz requisições ao backend e HTTP server
+  # Cliente 4 - Faz requisições FTP para o backend
   client4:
     image: curlimages/curl:latest
     command: >
       sh -c "
         while true; do
-          curl -s http://backend:8000/api/summary > /dev/null;
-          curl -s http://http-server/ > /dev/null;
+          echo 'Client4: Making FTP requests...';
+          curl -s --ftp-pasv ftp://testuser:testpass@backend:21/ > /dev/null;
+          curl -s --ftp-pasv -T /dev/null ftp://testuser:testpass@backend:21/client4_test.txt > /dev/null;
+          curl -s --ftp-pasv ftp://testuser:testpass@backend:21/client4_test.txt > /dev/null;
           sleep 5;
         done
       "
     depends_on:
       - backend
-      - http-server
     networks:
       app-network:
         ipv4_address: 10.50.0.104
