@@ -102,7 +102,7 @@ function TrafficChart() {
 
   return (
     <ResponsiveContainer width="100%" height={420}>
-      <BarChart data={data}>
+      <BarChart data={data} stackOffset="sign">
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="label" />
         <YAxis tickFormatter={formatBytes} />
@@ -117,19 +117,20 @@ function TrafficChart() {
         />
         <Legend />
         {clientSeries.map(({ client, dataKey, color }) => (
-          <Bar 
-            key={client} 
-            dataKey={dataKey} 
-            name={client} 
-            fill={color}
-            onClick={(data, index) => {
-              if (data && typeof index === 'number') {
-                const entry = data[index] as ChartDatum;
-                const binData = entry.__clients[client];
-                void selectBin(binData ?? null);
-              }
-            }}
-          />
+          <Bar key={client} dataKey={dataKey} stackId="traffic" name={client} fill={color}>
+            {data.map((entry) => (
+              <Cell
+                key={`${entry.ts}-${client}`}
+                fill={color}
+                cursor="pointer"
+                data-testid={`traffic-cell-${entry.ts}-${client}`}
+                onClick={() => {
+                  const binData = entry.__clients[client];
+                  void selectBin(binData ?? null);
+                }}
+              />
+            ))}
+          </Bar>
         ))}
       </BarChart>
     </ResponsiveContainer>
