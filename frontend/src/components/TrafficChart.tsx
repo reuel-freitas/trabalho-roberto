@@ -15,6 +15,7 @@ import { useTrafficStore, type SummaryBin } from "../store";
 interface ClientSeries {
   client: string;
   dataKey: string;
+  color: string;
 }
 
 interface ChartDatum {
@@ -23,6 +24,20 @@ interface ChartDatum {
   __clients: Record<string, SummaryBin>;
   [key: string]: unknown;
 }
+
+// Cores distintas para cada cliente
+const CLIENT_COLORS = [
+  "#3B82F6", // Azul
+  "#EF4444", // Vermelho
+  "#10B981", // Verde
+  "#F59E0B", // Amarelo
+  "#8B5CF6", // Roxo
+  "#06B6D4", // Ciano
+  "#84CC16", // Lima
+  "#F97316", // Laranja
+  "#EC4899", // Rosa
+  "#6B7280", // Cinza
+];
 
 function formatTimestamp(ts: number): string {
   const date = new Date(ts * 1000);
@@ -40,7 +55,11 @@ function TrafficChart() {
 
   const clientSeries = useMemo<ClientSeries[]>(() => {
     const unique = Array.from(new Set(summary.map((bin) => bin.client_ip))).sort();
-    return unique.map((client, index) => ({ client, dataKey: `client_${index}` }));
+    return unique.map((client, index) => ({ 
+      client, 
+      dataKey: `client_${index}`,
+      color: CLIENT_COLORS[index % CLIENT_COLORS.length]
+    }));
   }, [summary]);
 
   const keyMap = useMemo(() => {
@@ -83,7 +102,7 @@ function TrafficChart() {
 
   return (
     <ResponsiveContainer width="100%" height={420}>
-      <BarChart data={data} stackOffset="sign">
+      <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="label" />
         <YAxis tickFormatter={formatBytes} />
@@ -97,21 +116,20 @@ function TrafficChart() {
           }}
         />
         <Legend />
-        {clientSeries.map(({ client, dataKey }, index) => (
-          <Bar key={client} dataKey={dataKey} stackId="traffic" name={client}>
-            {data.map((entry) => (
-              <Cell
-                key={`${entry.ts}-${client}`}
-                fill={`hsl(${((index * 47) % 360) + (entry.ts % 20)} 70% 50%)`}
-                cursor="pointer"
-                data-testid={`traffic-cell-${entry.ts}-${client}`}
-                onClick={() => {
-                  const binData = entry.__clients[client];
-                  void selectBin(binData ?? null);
-                }}
-              />
-            ))}
-          </Bar>
+        {clientSeries.map(({ client, dataKey, color }) => (
+          <Bar 
+            key={client} 
+            dataKey={dataKey} 
+            name={client} 
+            fill={color}
+            onClick={(data, index) => {
+              if (data && typeof index === 'number') {
+                const entry = data[index] as ChartDatum;
+                const binData = entry.__clients[client];
+                void selectBin(binData ?? null);
+              }
+            }}
+          />
         ))}
       </BarChart>
     </ResponsiveContainer>

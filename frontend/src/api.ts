@@ -1,6 +1,6 @@
 import type { DrilldownPayload, SummaryBin } from "./store";
 
-const API_BASE = ((import.meta as any).env?.VITE_API_BASE ?? "/api").replace(/\/$/, "");
+const API_BASE = ((import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000/api").replace(/\/$/, "");
 
 function buildUrl(path: string): string {
   if (/^https?:\/\//i.test(API_BASE)) {

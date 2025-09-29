@@ -9,6 +9,7 @@ from typing import Optional
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 from aggregator import TrafficAggregator
 from capture import CaptureService
@@ -30,6 +31,15 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     capture_service = CaptureService(aggregator=aggregator, iface=settings.iface)
 
     app = FastAPI(title="Realtime Traffic Dashboard", version="1.0.0")
+
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allow all origins
+        allow_credentials=True,
+        allow_methods=["*"],  # Allow all methods
+        allow_headers=["*"],  # Allow all headers
+    )
 
     @app.on_event("startup")
     def _startup() -> None:
