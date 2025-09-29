@@ -10,6 +10,7 @@ Dashboard de análise de tráfego de servidor em tempo real com **FastAPI**, **P
 ## 📋 Índice
 
 - [Requisitos](#-requisitos)
+- [Arquitetura](#-arquitetura)
 - [Configuração Rápida](#-configuração-rápida)
 - [Executar com Docker](#-executar-com-docker)
 - [Desenvolvimento Local](#-desenvolvimento-local)
@@ -26,6 +27,125 @@ Dashboard de análise de tráfego de servidor em tempo real com **FastAPI**, **P
 - **Permissões de captura** (`tshark`/`dumpcap`) na interface desejada
 - **Python 3.11+** (para desenvolvimento local)
 - **Node.js 18+** (para desenvolvimento local)
+
+## 🏗️ Arquitetura
+
+### **Visão Geral**
+Sistema de monitoramento de tráfego em tempo real com **arquitetura de microsserviços** e **separação clara de responsabilidades**.
+
+### **Componentes Principais**
+
+#### **1. Backend (Python/FastAPI)**
+- **Framework**: FastAPI com Uvicorn
+- **Captura de pacotes**: PyShark (Wireshark) em thread separada
+- **Agregação**: In-memory com janelas de tempo configuráveis
+- **API**: REST com endpoints para summary e drill-down
+- **Modelos**: Pydantic para validação e serialização
+
+#### **2. Frontend (React/TypeScript)**
+- **Framework**: React 18 + TypeScript
+- **Build**: Vite para desenvolvimento e produção
+- **Estado**: Zustand para gerenciamento de estado global
+- **Gráficos**: Recharts para visualização de dados
+- **Estilo**: CSS puro com design responsivo
+
+### **Fluxo de Dados**
+
+```mermaid
+graph TD
+    A[Interface de Rede] --> B[CaptureService]
+    B --> C[TrafficAggregator]
+    C --> D[FastAPI Endpoints]
+    D --> E[React Frontend]
+    E --> F[Recharts Visualization]
+    
+    B --> G[PyShark/Wireshark]
+    C --> H[In-Memory Storage]
+    D --> I[REST API]
+    E --> J[Zustand Store]
+```
+
+### **Arquitetura de Comunicação**
+
+#### **Fluxo de Processamento:**
+1. **Captura**: `CaptureService` captura pacotes via PyShark em thread separada
+2. **Agregação**: `TrafficAggregator` agrega dados em janelas de tempo (5s padrão)
+3. **API**: FastAPI expõe endpoints REST para consulta de dados
+4. **Frontend**: React consome a API via polling (2s) e atualiza a interface
+5. **Visualização**: Recharts renderiza gráficos em tempo real
+
+#### **Endpoints da API:**
+- `GET /api/health` - Health check do sistema
+- `GET /api/summary` - Dados agregados por cliente e janela de tempo
+- `GET /api/drilldown` - Detalhes por protocolo para um cliente específico
+
+### **Padrões Arquiteturais**
+
+#### **1. Separação de Responsabilidades**
+- **Captura**: Isolada em `CaptureService` com thread dedicada
+- **Agregação**: Lógica de negócio em `TrafficAggregator`
+- **API**: FastAPI como camada de apresentação
+- **UI**: React para visualização e interação
+
+#### **2. Event-Driven Architecture**
+- Captura contínua de pacotes em background
+- Agregação em tempo real com janelas de tempo
+- Polling do frontend para atualizações automáticas
+
+#### **3. Microservices**
+- Backend e frontend como serviços independentes
+- Comunicação via HTTP/REST
+- Deploy independente via Docker Compose
+
+#### **4. State Management**
+- **Backend**: In-memory com locks thread-safe para concorrência
+- **Frontend**: Zustand para estado global reativo
+
+### **Características Técnicas**
+
+#### **Performance:**
+- Agregação em memória para baixa latência
+- Janelas de tempo configuráveis (5s padrão)
+- Retenção de dados configurável (300s padrão)
+- Thread-safe com locks para concorrência
+
+#### **Escalabilidade:**
+- API stateless para horizontal scaling
+- Agregação em memória (não persistente)
+- Containerização para deploy em qualquer ambiente
+
+#### **Monitoramento:**
+- Health check endpoint para verificação de status
+- Logs estruturados para debugging
+- Tratamento de erros robusto
+
+### **Tecnologias Utilizadas**
+
+#### **Backend Stack:**
+- **Python 3.11+** - Linguagem principal
+- **FastAPI** - Framework web moderno e rápido
+- **PyShark** - Captura de pacotes de rede
+- **Pydantic** - Validação e serialização de dados
+- **Uvicorn** - Servidor ASGI de alta performance
+
+#### **Frontend Stack:**
+- **React 18** - Biblioteca de interface de usuário
+- **TypeScript** - Tipagem estática para JavaScript
+- **Vite** - Build tool moderno e rápido
+- **Zustand** - Gerenciamento de estado leve
+- **Recharts** - Biblioteca de gráficos para React
+
+#### **Infraestrutura:**
+- **Docker & Docker Compose** - Containerização e orquestração
+- **Linux/WSL2** - Sistema operacional (para `network_mode: host`)
+- **TShark/Wireshark** - Ferramentas de captura de pacotes
+
+### **Pontos Fortes da Arquitetura**
+1. **Separação clara** entre captura, processamento e apresentação
+2. **Tempo real** com agregação eficiente de dados
+3. **Modularidade** para fácil manutenção e extensão
+4. **Testabilidade** com serviços isolados e bem definidos
+5. **Deploy simples** via Docker Compose
 
 ## ⚡ Configuração Rápida
 
