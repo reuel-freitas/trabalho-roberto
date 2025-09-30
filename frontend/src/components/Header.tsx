@@ -11,8 +11,6 @@ function formatTimeRange(from: number, to: number): string {
   return `${fmt.format(from * 1000)} - ${fmt.format(to * 1000)}`;
 }
 
-const ANOMALY_PLACEHOLDER = false;
-
 function Header() {
   const { timeRange, setTimeRange, loadSummary } = useTrafficStore();
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -73,19 +71,6 @@ function Header() {
           >
             {health?.ok ? "Capturing" : "Offline"}
           </div>
-          {ANOMALY_PLACEHOLDER && (
-            <div
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "9999px",
-                backgroundColor: "rgba(249,115,22,0.3)",
-                color: "white",
-                fontWeight: 600,
-              }}
-            >
-              Anomalia
-            </div>
-          )}
         </div>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

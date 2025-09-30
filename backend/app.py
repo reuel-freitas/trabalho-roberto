@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from aggregator import TrafficAggregator
 from capture import CaptureService
-from models import DrilldownResponse, HealthResponse, SummaryResponse
+from models import DrilldownResponse, HealthResponse, JsonDataRequest, JsonDataResponse, SummaryResponse
 from settings import Settings, get_settings
 
 
@@ -77,6 +77,29 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         if not result:
             raise HTTPException(status_code=404, detail="Bin not found")
         return DrilldownResponse(**result)
+
+    @app.post("/api/json-data", response_model=JsonDataResponse)
+    def receive_json_data(
+        request: JsonDataRequest,
+        aggregator: TrafficAggregator = Depends(get_aggregator),
+    ) -> JsonDataResponse:
+        """Receive and process JSON data sent via FTP."""
+        LOGGER.info("📄 JSON DATA RECEIVED: client_id=%s, type=%s, size=%d bytes", 
+                   request.client_id, request.data_type, request.file_size)
+        
+        # Log the payload for debugging
+        LOGGER.info("📄 JSON PAYLOAD: %s", request.payload)
+        
+        # Process the JSON data (you can add business logic here)
+        processed_at = int(time.time())
+        
+        return JsonDataResponse(
+            received=True,
+            processed_at=processed_at,
+            client_id=request.client_id,
+            file_size=request.file_size,
+            message=f"JSON data from {request.client_id} processed successfully"
+        )
 
     return app
 

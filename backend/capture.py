@@ -14,17 +14,6 @@ from aggregator import TrafficAggregator
 LOGGER = logging.getLogger(__name__)
 
 
-KNOWN_PROTOCOLS = {
-    "http": "HTTP",
-    "ftp": "FTP",
-    "dns": "DNS",
-    "tls": "HTTPS/TLS",
-    "tcp": "TCP",
-    "udp": "UDP",
-    "icmp": "ICMP",
-}
-
-
 class CaptureService:
     """Capture packets from an interface and feed the aggregator."""
 

@@ -1,6 +1,6 @@
 """Pydantic models for API responses."""
 
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -41,5 +41,25 @@ class DrilldownResponse(BaseModel):
     ts: int
     client_ip: str
     items: List[DrilldownItem]
+
+
+class JsonDataRequest(BaseModel):
+    """Request model for JSON data received via FTP."""
+    
+    client_id: str
+    timestamp: int
+    data_type: str
+    payload: Dict[str, Any]
+    file_size: int
+
+
+class JsonDataResponse(BaseModel):
+    """Response model for JSON data processing."""
+    
+    received: bool
+    processed_at: int
+    client_id: str
+    file_size: int
+    message: str
 
 

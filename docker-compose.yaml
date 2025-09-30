@@ -90,7 +90,7 @@ services:
       app-network:
         ipv4_address: 10.50.0.103
 
-  # Cliente 4 - Faz requisições FTP para o backend
+  # Cliente 4 - Faz requisições FTP e envia JSON
   client4:
     image: curlimages/curl:latest
     command: >
@@ -98,8 +98,19 @@ services:
         while true; do
           echo 'Client4: Making FTP requests...';
           curl -s --ftp-pasv ftp://testuser:testpass@backend:21/ > /dev/null;
-          curl -s --ftp-pasv -T /dev/null ftp://testuser:testpass@backend:21/client4_test.txt > /dev/null;
-          curl -s --ftp-pasv ftp://testuser:testpass@backend:21/client4_test.txt > /dev/null;
+          
+          echo 'Client4: Creating and sending JSON data...';
+          JSON_DATA='{\"client_id\":\"client4\",\"timestamp\":'$$(date +%s)',\"data_type\":\"sensor_data\",\"payload\":{\"temperature\":23.5,\"humidity\":65.2,\"pressure\":1013.25,\"location\":\"10.50.0.104\"},\"file_size\":156}';
+          
+          echo \"$$JSON_DATA\" > /tmp/client4_data.json;
+          
+          curl -s --ftp-pasv -T /tmp/client4_data.json ftp://testuser:testpass@backend:21/client4_data.json > /dev/null;
+          
+          curl -s -X POST http://backend:8000/api/json-data \
+            -H 'Content-Type: application/json' \
+            -d \"$$JSON_DATA\" > /dev/null;
+          
+          echo 'Client4: JSON data sent successfully';
           sleep 5;
         done
       "

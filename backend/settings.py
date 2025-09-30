@@ -1,7 +1,5 @@
 """Application configuration settings."""
 
-import socket
-import subprocess
 from functools import lru_cache
 from typing import Optional
 

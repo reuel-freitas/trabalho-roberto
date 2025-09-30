@@ -6,13 +6,9 @@ import logging
 import threading
 import time
 from collections import defaultdict
-from typing import DefaultDict, Dict, Iterable, List, Optional
+from typing import DefaultDict, Dict, List, Optional
 
 LOGGER = logging.getLogger(__name__)
-
-
-ProtocolTotals = Dict[str, Dict[str, int]]
-ClientTotals = Dict[str, object]
 
 
 class TrafficAggregator:
